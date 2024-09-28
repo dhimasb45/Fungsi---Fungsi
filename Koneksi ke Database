@@ -1,16 +1,57 @@
-var err error
-	dsn := "root:ComputerScience*45@tcp(127.0.0.1:3306)/testdb" //Tinggal ganti testdb, disesuaikan dengan database yang digunakan.
+package main
 
-	db, err = sql.Open("mysql", dsn)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
+import (
+    "database/sql"
+    "fmt"
+    "log"
+    "time"
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
+    _ "github.com/go-sql-driver/mysql"
+)
 
-	}
+func main() {
+    // Informasi koneksi ke database
+    dsn := "user:password@tcp(localhost:3306)/database_name"
 
-	fmt.Println("Berhasil terhubung ke database")
+    // Membuka koneksi ke database
+    db, err := sql.Open("mysql", dsn)
+    if err != nil {
+        log.Fatalf("Error membuka koneksi ke database: %v", err)
+    }
+    defer db.Close() // Menutup koneksi saat program selesai
+
+    // Mengatur pooling koneksi
+    db.SetMaxOpenConns(10)                 // Maksimum 10 koneksi terbuka
+    db.SetMaxIdleConns(5)                  // Maksimum 5 koneksi idle yang dipertahankan
+    db.SetConnMaxLifetime(time.Minute * 3) // Koneksi hidup maksimal 3 menit
+
+    // Cek apakah koneksi ke database berhasil
+    err = db.Ping()
+    if err != nil {
+        log.Fatalf("Tidak dapat terhubung ke database: %v", err)
+    }
+
+    fmt.Println("Berhasil terhubung ke database!")
+
+    // Contoh penggunaan query ke database
+    rows, err := db.Query("SELECT id, name FROM customers")
+    if err != nil {
+        log.Fatalf("Error menjalankan query: %v", err)
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var id int
+        var name string
+        err := rows.Scan(&id, &name)
+        if err != nil {
+            log.Fatalf("Error membaca hasil query: %v", err)
+        }
+        fmt.Printf("ID: %d, Name: %s\n", id, name)
+    }
+
+    if err = rows.Err(); err != nil {
+        log.Fatalf("Error iterasi hasil query: %v", err)
+    }
+}
+
