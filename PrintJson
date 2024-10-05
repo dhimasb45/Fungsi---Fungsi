@@ -1,3 +1,19 @@
+// Fungsi yang digunakan untuk mengambil data Body pada respon HTTP
+func getItemData(url string) ([]byte, error) {
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	defer res.Body.Close()
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Fatalf("error reading response body: %v", err)
+	}
+	return data, nil
+}
+
+// Fungsi yang digunakan untuk memperindah tampilan data pada fungsi diatas
 func PrintJson(data []byte) {
 	// Mencetak JSON dengan format yang baik
 	var jsonData interface{} // Gunakan interface{} untuk fleksibilitas
