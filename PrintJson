@@ -1,0 +1,14 @@
+func PrintJson(data []byte) {
+	// Mencetak JSON dengan format yang baik
+	var jsonData interface{} // Gunakan interface{} untuk fleksibilitas
+	if err := json.Unmarshal(data, &jsonData); err != nil {
+		log.Fatalf("error parsing JSON: %v", err)
+	}
+
+	// Mencetak JSON yang sudah di-format
+	formattedJSON, err := json.MarshalIndent(jsonData, "", "    ") // Indentasi dengan 4 spasi
+	if err != nil {
+		log.Fatalf("error formatting JSON: %v", err)
+	}
+	fmt.Println(string(formattedJSON))
+}
