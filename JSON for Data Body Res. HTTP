@@ -1,0 +1,61 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+)
+
+const usersUrl = "https://api.boot.dev/v1/courses_rest_api/learn-http/items"
+
+func main() {
+	res, err := GetRespon(usersUrl)
+	if err != nil {
+		log.Fatalf("error getting item data: %v", err)
+	}
+
+	// Mengakses berbagai informasi dari response
+	fmt.Printf("Request URL: %s\n", res.Request.URL)
+	fmt.Printf("Request Method: %s\n", res.Request.Method)
+	fmt.Printf("Protocol: %s\n", res.Proto)
+	fmt.Printf("Status Code: %d\n", res.StatusCode)
+	fmt.Printf("Status: %s\n", res.Status)
+
+	// Mengakses header
+	fmt.Printf("Content-Type: %s\n", res.Header.Get("Content-Type"))
+
+	// Mengakses body
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Fatalf("error reading response body: %v", err)
+	}
+	defer res.Body.Close()
+
+	PrintJson(data)
+
+}
+
+func GetRespon(url string) (*http.Response, error) {
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %w", err)
+	}
+	return res, nil
+}
+
+func PrintJson(data []byte) {
+	// Mencetak JSON dengan format yang baik
+	var jsonData interface{} // Gunakan interface{} untuk fleksibilitas
+	if err := json.Unmarshal(data, &jsonData); err != nil {
+		log.Fatalf("error parsing JSON: %v", err)
+	}
+
+	// Mencetak JSON yang sudah di-format
+	formattedJSON, err := json.MarshalIndent(jsonData, "", "    ") // Indentasi dengan 4 spasi
+	if err != nil {
+		log.Fatalf("error formatting JSON: %v", err)
+	}
+	fmt.Println(string(formattedJSON))
+}
