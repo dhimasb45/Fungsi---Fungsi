@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 )
@@ -22,18 +21,10 @@ type Item struct {
 const usersUrl = "https://api.boot.dev/v1/courses_rest_api/learn-http/items"
 
 func main() {
-	// Mengambil data JSON dari URL
-	jsonData := fetchDataFromURL(usersUrl)
-	// fmt.Println(jsonData)
-	if jsonData == nil {
-		fmt.Println("Failed to fetch or format JSON.")
-		return
-	}
-
-	// Dekode JSON menjadi slice dari struct Item
-	items, err := decodeJSON(jsonData)
+	/// Mengambil data JSON dari URL dan mendekode langsung ke slice dari struct Item
+	items, err := fetchDataFromURL(usersUrl)
 	if err != nil {
-		fmt.Println("Error decoding JSON:", err)
+		fmt.Println("Failed to fetch or decode JSON:", err)
 		return
 	}
 
@@ -43,39 +34,30 @@ func main() {
 	}
 }
 
-// fetchDataFromURL mengambil data JSON dari URL dan mengembalikan sebagai []byte
-func fetchDataFromURL(url string) []byte {
+func fetchDataFromURL(url string) ([]Item, error) {
 	// Mengirim permintaan HTTP GET
 	res, err := http.Get(url)
 	if err != nil {
 		log.Printf("Error making request: %v", err)
-		return nil
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	// Memeriksa status HTTP
 	if res.StatusCode != http.StatusOK {
 		log.Printf("Received non-OK HTTP status: %s", res.Status)
-		return nil
+		return nil, fmt.Errorf("received non-OK HTTP status: %s", res.Status)
 	}
 
-	// Membaca data dari response body
-	data, err := io.ReadAll(res.Body)
-	if err != nil {
-		log.Printf("Error reading response body: %v", err)
-		return nil
-	}
-
-	return data
-}
-
-// decodeJSON mendekode JSON dari byte array menjadi slice dari Item
-func decodeJSON(input []byte) ([]Item, error) {
+	// Menggunakan json.Decoder untuk mendekode langsung dari res.Body
 	var items []Item
-	err := json.Unmarshal(input, &items)
+	decoder := json.NewDecoder(res.Body)
+	err = decoder.Decode(&items)
 	if err != nil {
+		log.Printf("Error decoding JSON: %v", err)
 		return nil, err
 	}
+
 	return items, nil
 }
 
@@ -106,5 +88,5 @@ func fetchDataFromURL(url string) string {
 		return ""
 	}
 
-	return data
+	return string(data)
 }
