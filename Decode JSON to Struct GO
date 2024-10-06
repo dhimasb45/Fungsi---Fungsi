@@ -1,0 +1,110 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+)
+
+==> Untuk mendapatkan type struct dibawah ini dapat ke https://mholt.github.io/json-to-go/ dengan menginput hasil string dari fungsi fetchDataFromURL
+==> Jadi nanti fungsi fetchDataFromURL itu ada dua : yang satu return nya []Byte dan yang satunya returnnya string
+
+// Struct untuk menyimpan data dari JSON
+type Item struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Quality int    `json:"quality"`
+}
+
+// URL API
+const usersUrl = "https://api.boot.dev/v1/courses_rest_api/learn-http/items"
+
+func main() {
+	// Mengambil data JSON dari URL
+	jsonData := fetchDataFromURL(usersUrl)
+	// fmt.Println(jsonData)
+	if jsonData == nil {
+		fmt.Println("Failed to fetch or format JSON.")
+		return
+	}
+
+	// Dekode JSON menjadi slice dari struct Item
+	items, err := decodeJSON(jsonData)
+	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		return
+	}
+
+	// Menampilkan data hasil decoding
+	for _, item := range items {
+		fmt.Printf("ID: %s, Name: %s, Quality: %d\n", item.ID, item.Name, item.Quality)
+	}
+}
+
+// fetchDataFromURL mengambil data JSON dari URL dan mengembalikan sebagai []byte
+func fetchDataFromURL(url string) []byte {
+	// Mengirim permintaan HTTP GET
+	res, err := http.Get(url)
+	if err != nil {
+		log.Printf("Error making request: %v", err)
+		return nil
+	}
+	defer res.Body.Close()
+
+	// Memeriksa status HTTP
+	if res.StatusCode != http.StatusOK {
+		log.Printf("Received non-OK HTTP status: %s", res.Status)
+		return nil
+	}
+
+	// Membaca data dari response body
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Printf("Error reading response body: %v", err)
+		return nil
+	}
+
+	return data
+}
+
+// decodeJSON mendekode JSON dari byte array menjadi slice dari Item
+func decodeJSON(input []byte) ([]Item, error) {
+	var items []Item
+	err := json.Unmarshal(input, &items)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+========================================================================================================================
+
+=> Fungsi yang digunakan untuk mendapatkan JSON dalam string
+
+// fetchDataFromURL mengambil data JSON dari URL dan mengembalikan sebagai string
+func fetchDataFromURL(url string) string {
+	// Mengirim permintaan HTTP GET
+	res, err := http.Get(url)
+	if err != nil {
+		log.Printf("Error making request: %v", err)
+		return ""
+	}
+	defer res.Body.Close()
+
+	// Memeriksa status HTTP
+	if res.StatusCode != http.StatusOK {
+		log.Printf("Received non-OK HTTP status: %s", res.Status)
+		return ""
+	}
+
+	// Membaca data dari response body
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Printf("Error reading response body: %v", err)
+		return ""
+	}
+
+	return data
+}
