@@ -1,0 +1,59 @@
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/xuri/excelize/v2"
+)
+
+func ExceltoJsonFile(file_excel string) {
+	// Buka file Excel
+	f, err := excelize.OpenFile(file_excel)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	// Ambil semua baris dari sheet pertama
+	rows, err := f.GetRows("Sheet1")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Buat slice untuk menyimpan data JSON
+	var data []map[string]string
+
+	// Anggap baris pertama sebagai header
+	headers := rows[0]
+
+	// Loop melalui setiap baris setelah header
+	for _, row := range rows[1:] {
+		rowData := make(map[string]string)
+		for i, cell := range row {
+			rowData[headers[i]] = cell
+		}
+		data = append(data, rowData)
+	}
+
+	// Konversi data ke format JSON
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Buat atau buka file "output.json"
+	file, err := os.Create("output.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	// Tulis data JSON ke dalam file
+	_, err = file.Write(jsonData)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("JSON data has been written to output.json")
+}
